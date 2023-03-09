@@ -1,0 +1,124 @@
+{
+    "family": "aws-opensource-otel",
+    "containerDefinitions": [
+
+##### Application image
+        {
+            "name": "aws-otel-emitter",
+            "image": "docker.io/abhimanyubajaj98/tomcat-app-buildx:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "aws-otel-emitter",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "APPDYNAMICS_AGENT_ACCOUNT_NAME",
+                    "value": "XXXXX"
+                },
+                {
+                    "name": "APPDYNAMICS_AGENT_TIER_NAME",
+                    "value": "abhi-tomcat-ecs"
+                },
+                {
+                    "name": "APPDYNAMICS_CONTROLLER_PORT",
+                    "value": "443"
+                },
+                {
+                    "name": "JAVA_TOOL_OPTIONS",
+                    "value": "-javaagent:/opt/appdynamics/javaagent.jar"
+                },
+                {
+                    "name": "APPDYNAMICS_AGENT_APPLICATION_NAME",
+                    "value": "abhi-ecs-fargate"
+                },
+                {
+                    "name": "APPDYNAMICS_CONTROLLER_HOST_NAME",
+                    "value": "XXXXX.saas.appdynamics.com"
+                },
+                {
+                    "name": "APPDYNAMICS_JAVA_AGENT_REUSE_NODE_NAME_PREFIX",
+                    "value": "abhi-tomcat-ecs"
+                },
+                {
+                    "name": "APPDYNAMICS_CONTROLLER_SSL_ENABLED",
+                    "value": "true"
+                },
+                {
+                    "name": "APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY",
+                    "value": "XXXXX"
+                },
+                {
+                    "name": "APPDYNAMICS_JAVA_AGENT_REUSE_NODE_NAME",
+                    "value": "true"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [
+                {
+                    "sourceContainer": "appdynamics-java-agent"
+                }
+            ],
+            "dependsOn": [
+                {
+                    "containerName": "appdynamics-java-agent",
+                    "condition": "START"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "True",
+                    "awslogs-group": "/ecs/ecs-aws-otel-java-tomcat-app",
+                    "awslogs-region": "us-west-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:8080/sample || exit1"
+                ],
+                "interval": 300,
+                "timeout": 60,
+                "retries": 10,
+                "startPeriod": 300
+            }
+        },
+
+#####Java Agent configuration
+        {
+            "name": "appdynamics-java-agent",
+            "image": "docker.io/abhimanyubajaj98/java-agent-ecs",
+            "cpu": 0,
+            "portMappings": [],
+            "essential": false,
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/java-agent-ecs",
+                    "awslogs-region": "us-west-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::778192218178:role/ADOTRole",
+    "executionRoleArn": "arn:aws:iam::778192218178:role/ADOTTaskRole",
+    "networkMode": "bridge",
+    "requiresCompatibilities": [
+        "EC2"
+    ],
+    "cpu": "256",
+    "memory": "512"
+}
